@@ -71,7 +71,7 @@ try {
         $admin = userIsAdmin($conn) ? 1 : 0;
         $color = $_POST['color'];
 
-        if(hash_equals($_SESSION['token'], $_POST['token'])) {
+        if (hash_equals($_SESSION['token'], $_POST['token'])) {
             $isValidEmail = filter_var($_POST['email'], FILTER_VALIDATE_EMAIL);
             if ($isValidEmail) {
                 $statement = $conn->prepare("INSERT INTO `entries`(`email`, `color`, `admin`, `text`) 
