@@ -42,8 +42,17 @@ try {
 <div class="body-container">
     <h1 class="heading">Gastenboek 'De lekkage'</h1>
     <form action="guestbook.php" method="post">
+        <?php
+        session_start();
+        if (empty($_SESSION['token'])) {
+            $_SESSION['token'] = bin2hex(random_bytes(32));
+            echo "<input type=\"hidden\" name=\"token\" value=" . $_SESSION['token'] . "/>";
+        }
+        ?>
         Email: <input type="email" name="email"><br/>
         Bericht: <textarea name="text" minlength="4"></textarea><br/>
+
+        <input type="hidden" name="token" value="<?= $_SESSION['token'] ?>" />
 
         <?php if (userIsAdmin($conn)) {
             echo  "<input type=\"hidden\" value=\"red\" name=\"color\">";
@@ -62,18 +71,22 @@ try {
         $admin = userIsAdmin($conn) ? 1 : 0;
         $color = $_POST['color'];
 
-        $isValidEmail = filter_var($_POST['email'], FILTER_VALIDATE_EMAIL);
-        if ($isValidEmail) {
-            $statement = $conn->prepare("INSERT INTO `entries`(`email`, `color`, `admin`, `text`) 
+        if(hash_equals($_SESSION['token'], $_POST['token'])) {
+            $isValidEmail = filter_var($_POST['email'], FILTER_VALIDATE_EMAIL);
+            if ($isValidEmail) {
+                $statement = $conn->prepare("INSERT INTO `entries`(`email`, `color`, `admin`, `text`) 
                                         VALUES (:email, :color, :admin, :text);");
-            $statement->execute([
-                'email' => $email,
-                'color' => $color,
-                'admin' => $admin,
-                'text' => $text
-            ]);
-        } else {
-            echo "<p>[INVALID input]</p>";
+                $statement->execute([
+                    'email' => $email,
+                    'color' => $color,
+                    'admin' => $admin,
+                    'text' => $text
+                ]);
+
+                session_abort();
+            } else {
+                echo "<p>[INVALID input]</p>";
+            }
         }
     }
 
